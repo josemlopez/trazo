@@ -4,6 +4,8 @@
 @media(max-width:760px){.topbar{height:65px;padding:0 20px}.brand{font-size:28px}.local-badge{font-size:8px}.home{padding:37px 18px 20px}.home h1{font-size:49px}.intro{font-size:12px}.intro br{display:none}.steps{gap:10px;font-size:9px}.steps div{gap:5px}.step-line{width:10px}.recent-grid{grid-template-columns:1fr}.session-bar{padding:12px;flex-wrap:wrap}.session-title h1{max-width:70vw}.session-actions{width:100%;justify-content:space-between}.session-actions .button{font-size:10px;gap:7px;padding:8px 10px}.session-actions .state{font-size:9px}.workspace-grid{grid-template-columns:1fr;height:auto;min-height:0}.editor{height:64dvh;min-height:390px}.sidebar{border-left:0;border-top:1px solid var(--line);overflow:visible}.toolbar{gap:6px}.tool-group{padding-right:6px}.tool{min-width:32px}.width-label{display:none}.colors{gap:5px}.canvas-footer{padding:8px 12px}.session-title span{font-size:9px}.recent-section{margin-top:32px}.pins-section{min-height:0}.brand-description{display:none}}
 
 /* The viewport is the writing surface. Image bounds never clip handwriting. */
+.sidebar > *{flex-shrink:0}
+.sidebar .pins-section{flex:1 0 auto}
 .canvas-viewport{overflow:hidden;background:#fffefa;overscroll-behavior:none;touch-action:none}
 #canvas-wrap{position:absolute;inset:0;padding:0;margin:0;width:100%;height:100%;box-sizing:border-box}
 #canvas{width:100%;height:100%;box-shadow:none;background:#fffefa;touch-action:none;-webkit-touch-callout:none}

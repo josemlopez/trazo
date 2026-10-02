@@ -26,7 +26,7 @@ async function api(path, options={}) {
   if (!response.ok) {
     let message = `Error ${response.status}`;
     try { message = (await response.json()).detail || message; } catch {}
-    const error = new Error(typeof message === 'string' ? message : 'No se pudo guardar la sesión.'); error.status = response.status; throw error;
+    const error = new Error(typeof message === 'string' ? message : 'Could not save the session.'); error.status = response.status; throw error;
   }
   return response.json();
 }
@@ -36,9 +36,9 @@ function remember(item) {
 }
 async function upload(file) {
   if (!file || upload.busy) return;
-  if (file.size > 25 * 1024 * 1024) { toast('La imagen debe ocupar menos de 25 MB.'); return; }
-  upload.busy = true; $('#upload-status').textContent = 'Creando tu sesión…'; $('#file').disabled = true;
-  const body = new FormData(); body.append('file', file, file.name || 'captura.png');
+  if (file.size > 25 * 1024 * 1024) { toast('The image must be smaller than 25 MB.'); return; }
+  upload.busy = true; $('#upload-status').textContent = 'Creating your session…'; $('#file').disabled = true;
+  const body = new FormData(); body.append('file', file, file.name || 'screenshot.png');
   try { const created = await api('/api/sessions', {method:'POST',body}); remember(created); location.href = `/s/${created.id}?share=1`; }
   catch (e) { $('#upload-status').textContent = e.message; upload.busy = false; $('#file').disabled = false; }
 }
@@ -51,12 +51,12 @@ function initHome() {
   dropzone.addEventListener('drop', e => { e.preventDefault(); dropzone.classList.remove('dragging'); upload(e.dataTransfer.files[0]); });
   document.addEventListener('paste', e => { const file = [...e.clipboardData.items].find(i => i.type.startsWith('image/'))?.getAsFile(); if (file) { e.preventDefault(); upload(file); } });
   const recent = readStorage('trazo-recent', []);
-  if (!recent.length) { const empty = document.createElement('div'); empty.className = 'recent-empty'; empty.textContent = 'Las imágenes que subas aparecerán aquí. Empieza con tu primera captura.'; $('#recent').append(empty); }
+  if (!recent.length) { const empty = document.createElement('div'); empty.className = 'recent-empty'; empty.textContent = 'Your uploaded images will appear here. Start with your first screenshot.'; $('#recent').append(empty); }
   for (const item of recent) {
     const card = document.createElement('a'); card.className = 'recent-card'; card.href = `/s/${item.id}`;
     const image = document.createElement('img'); image.src = `/api/sessions/${item.id}/image`; image.alt = ''; image.loading = 'lazy';
     const text = document.createElement('div'), title = document.createElement('strong'), small = document.createElement('small');
-    title.textContent = item.title; small.textContent = 'Abrir sesión →'; text.append(title, small); card.append(image,text); $('#recent').append(card);
+    title.textContent = item.title; small.textContent = 'Open session →'; text.append(title, small); card.append(image,text); $('#recent').append(card);
   }
 }
 
@@ -82,7 +82,7 @@ function acceptSaved(remote) {
     session=remote;annotations=clone(remote.annotations);notes=remote.notes;$('#notes').value=notes;
     history=[];future=[];renderPins();draw();updateUndo();
   }
-  if(!remotePreview)state(session.status==='ready'?'✓ Listo para el agente':'✓ Guardado en el PC');
+  if(!remotePreview)state(session.status==='ready'?'✓ Ready for agent':'✓ Saved to PC');
 }
 function connectLive() {
   clearTimeout(liveTimer);
@@ -106,11 +106,11 @@ function connectLive() {
       remotePreview={...message.draft,client:message.client,stroke:null,seen:Date.now()};
       // Preview changes do not mutate the durable local revision.
       if(document.activeElement!==$('#notes'))$('#notes').value=remotePreview.notes;
-      renderPins();draw();state('● Cambios en directo · guardando');
+      renderPins();draw();state('● Live changes · saving');
     } else if(message.type==='stroke' && message.version>=session.version){
       if(!remotePreview||remotePreview.client!==message.client)remotePreview={version:message.version,annotations:clone(annotations),notes,client:message.client};
       remotePreview.stroke=message.stroke;remotePreview.seen=Date.now();draw();
-      state(message.stroke?'● Dibujando en directo':'● Cambios en directo · guardando');
+      state(message.stroke?'● Drawing live':'● Live changes · saving');
     }
   };
   liveSocket.onclose=()=>{livePeers=[];updateConnection();liveTimer=setTimeout(connectLive,1500);};
@@ -121,17 +121,17 @@ function updateUndo() { $('#undo').disabled = !editing || !history.length; $('#r
 function saveDraft() {
   if (!session) return;
   const ok = store(draftKey, {version:session.version,annotations,notes,status:session.status});
-  if (!ok) { notice('El navegador no tiene espacio para un borrador local. Mantén esta página abierta hasta que indique «Guardado en el PC».'); $('#draft').hidden = false; }
+  if (!ok) { notice('Your browser has no space for a local draft. Keep this page open until it shows “Saved to PC”.'); $('#draft').hidden = false; }
 }
 function changed() {
-  dirty = true; changeNumber++; session.status = 'editing'; state('Cambios sin guardar');
+  dirty = true; changeNumber++; session.status = 'editing'; state('Unsaved changes');
   remotePreview=null;saveDraft();clearTimeout(saveTimer);saveTimer=setTimeout(save,350);updateUndo();sendDraft();
 }
 async function save() {
   clearTimeout(saveTimer);
   if (!dirty || saving || conflict || !session) return;
   saving = true; const number = changeNumber;
-  state('Guardando en el PC…');
+  state('Saving to PC…');
   const body = JSON.stringify({version:session.version, annotations, notes, status:session.status});
   try {
     const saved = await api(`/api/sessions/${sid}`, {method:'PUT',headers:{'Content-Type':'application/json','X-Trazo-Client':clientId},body});
@@ -139,14 +139,14 @@ async function save() {
     if (number === changeNumber) {
       dirty = false; session.status = saved.status;
       try { localStorage.removeItem(draftKey); } catch {}
-      state(saved.status === 'ready' ? '✓ Listo para el agente' : '✓ Guardado en el PC');
+      state(saved.status === 'ready' ? '✓ Ready for agent' : '✓ Saved to PC');
     } else { saveDraft(); }
     remember(session);
   } catch (e) {
-    connectionOK = false; state('No se ha guardado', true); saveDraft();
+    connectionOK = false; state('Not saved', true); saveDraft();
     if (e.status === 409) {
       conflict = true; notice(e.message); $('#draft').hidden = false;
-      const reload = document.createElement('button'); reload.textContent = 'Guardar borrador y cargar versión del PC';
+      const reload = document.createElement('button'); reload.textContent = 'Download draft and load PC version';
       reload.onclick = async () => {
         downloadDraft();
         try {
@@ -155,12 +155,12 @@ async function save() {
           $('#notes').value = notes; dirty = false; conflict = false; connectionOK = true;
           history = []; future = []; try { localStorage.removeItem(draftKey); } catch {}
           notice(''); $('#draft').hidden = true; renderPins(); draw(); updateUndo();
-          state('✓ Versión del PC cargada');
+          state('✓ PC version loaded');
         } catch (error) { toast(error.message); }
       };
       $('#notice').append(reload);
     }
-    else { notice(`${e.message} Tus cambios siguen en este navegador. Volveremos a intentar guardarlos.`); }
+    else { notice(`${e.message} Your changes are still in this browser. We will try saving again.`); }
   } finally {
     saving = false;
     if (dirty && !conflict) saveTimer = setTimeout(save, connectionOK ? 100 : 4000);
@@ -174,12 +174,12 @@ function renderPins() {
     const card = document.createElement('div'); card.className = 'pin-card';
     const head = document.createElement('div'); head.className = 'pin-heading';
     const number = document.createElement('span'); number.className = 'pin-number'; number.style.background = a.color; number.textContent = index+1;
-    const label = document.createElement('span'); label.textContent = `Zona ${index+1}`; head.append(number,label);
+    const label = document.createElement('span'); label.textContent = `Area ${index+1}`; head.append(number,label);
     if (editing && !previewing) {
-      const remove = document.createElement('button'); remove.className='pin-delete'; remove.textContent='×'; remove.title='Eliminar esta zona';
+      const remove = document.createElement('button'); remove.className='pin-delete'; remove.textContent='×'; remove.title='Delete this area';
       remove.onclick = () => { checkpoint(); annotations.splice(annotations.indexOf(a),1); changed(); renderPins(); draw(); }; head.append(remove);
     }
-    const textarea = document.createElement('textarea'); textarea.rows = 2; textarea.maxLength=4000; textarea.placeholder='¿Qué cambio quieres aquí?'; textarea.value=a.text || ''; textarea.disabled=!editing||previewing; textarea.dataset.pin=index;
+    const textarea = document.createElement('textarea'); textarea.rows = 2; textarea.maxLength=4000; textarea.placeholder='What would you like to change here?'; textarea.value=a.text || ''; textarea.disabled=!editing||previewing; textarea.dataset.pin=index;
     textarea.addEventListener('input', () => { a.text=textarea.value; changed(); }); card.append(head,textarea); $('#pins').append(card);
   });
 }
@@ -258,7 +258,7 @@ function pointerDown(e) {
   if(tool==='pan'||fingerPan||!editing){pan={id:e.pointerId,x:e.clientX,y:e.clientY,left:camera.x,top:camera.y};viewport.setPointerCapture(e.pointerId);return;}
   if(e.target!==canvas || finishing)return;
   if(activePointer!==null)return;
-  if(remotePreview){toast('Espera al guardado del otro editor antes de dibujar aquí.');return;}
+  if(remotePreview){toast('Wait for the other editor to finish saving before drawing here.');return;}
   if(document.activeElement instanceof HTMLElement)document.activeElement.blur();
   const point=imagePoint(e);activePointer=e.pointerId;canvas.setPointerCapture(e.pointerId);
   currentStroke={kind:tool,color,width:Number($('#width').value)*Math.max(1,session.width/1200),points:[point],text:''};
@@ -291,8 +291,8 @@ function pointerUp(e) {
   if(isPin)selectTool('pen');
 }
 function configureEditing() {
-  $('#mode-label').textContent=editing?'MODO ANOTACIÓN':'VISTA DEL PC';$('#toggle-edit').textContent=editing?'Solo ver':'Editar aquí';
-  $('#notes').disabled=!editing;$('#finish').disabled=!editing;$('#finish').title=editing?'Guardar y marcar como terminado':'Marca la sesión como terminada desde el editor';
+  $('#mode-label').textContent=editing?'EDIT MODE':'PC VIEW';$('#toggle-edit').textContent=editing?'View only':'Edit here';
+  $('#notes').disabled=!editing;$('#finish').disabled=!editing;$('#finish').title=editing?'Save and mark as complete':'Mark the session as complete from the editor';
   for(const b of $$('[data-tool],[data-color],#width'))b.disabled=!editing&&b.dataset.tool!=='pan';
   renderPins();updateUndo();selectTool(editing?'pen':'pan');
   liveSend({type:'hello',tablet,editing});
@@ -302,8 +302,8 @@ function updateConnection() {
   const tabletConnected=livePeers.some(p=>p.tablet&&p.editing);
   const online=connectionOK&&(editing||session.editor_online||tabletConnected);
   $('#connection-dot').classList.toggle('online',online);
-  $('#connection-title').textContent=!connectionOK?'Conexión interrumpida':tabletConnected?'iPad conectado · en directo':editing?'Editando esta sesión':session.editor_online?'Editor conectado':'Esperando al editor';
-  $('#connection-detail').textContent=!connectionOK?'Los cambios pendientes siguen en este navegador.':liveSocket?.readyState===WebSocket.OPEN?'Los trazos se comparten mientras dibujas.':'Actualización periódica; reconectando el directo.';
+  $('#connection-title').textContent=!connectionOK?'Connection interrupted':tabletConnected?'iPad connected · live':editing?'Editing this session':session.editor_online?'Editor connected':'Waiting for editor';
+  $('#connection-detail').textContent=!connectionOK?'Unsaved changes are still in this browser.':liveSocket?.readyState===WebSocket.OPEN?'Strokes are shared as you draw.':'Refreshing periodically; reconnecting live updates.';
 }
 async function heartbeat() { if(!editing||document.hidden)return;try{await api(`/api/sessions/${sid}/heartbeat`,{method:'POST'});}catch{} }
 async function refresh() {
@@ -313,40 +313,40 @@ async function refresh() {
     session.editor_online=remote.editor_online;
     if(remotePreview && Date.now()-remotePreview.seen>10000){remotePreview=null;$('#notes').value=notes;renderPins();draw();}
     acceptSaved(remote);
-  }catch{connectionOK=false;state('Sin conexión con el PC',true);}finally{fetching=false;updateConnection();}
+  }catch{connectionOK=false;state('Disconnected from PC',true);}finally{fetching=false;updateConnection();}
 }
 async function clipboard(text) {
   try {if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(text);return;}}catch{}
   const textarea=document.createElement('textarea');textarea.value=text;textarea.style.position='fixed';textarea.style.top='0';textarea.style.opacity='0';
   // Keep the fallback inside the modal when it is open, so Safari can focus it.
   ($('#share-dialog').open?$('#share-dialog'):document.body).append(textarea);textarea.focus();textarea.select();textarea.setSelectionRange(0,text.length);
-  const copied=document.execCommand('copy');textarea.remove();if(!copied)throw new Error('Selecciona y copia el enlace manualmente.');
+  const copied=document.execCommand('copy');textarea.remove();if(!copied)throw new Error('Select and copy the link manually.');
 }
 function share() { $('#qr').src=`/api/sessions/${sid}/qr`;$('#session-url').value=session.url;$('#share-dialog').showModal(); }
 function downloadDraft() {
   const blob=new Blob([JSON.stringify({session:sid,version:session.version,annotations,notes},null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='borrador-local.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='local-draft.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
 async function finish() {
   if(finishing||conflict)return;
   finishing=true;$('#finish').disabled=true;
   try{
-    if(saving){toast('Espera a que termine el guardado y vuelve a pulsar.');return;}
+    if(saving){toast('Wait for saving to finish, then try again.');return;}
     session.status='ready';dirty=true;changeNumber++;saveDraft();await save();
-    if(dirty)throw new Error('Todavía hay cambios sin guardar. Espera a recuperar la conexión.');
+    if(dirty)throw new Error('There are still unsaved changes. Wait for the connection to recover.');
     // Generate the deliverable on the PC when marking ready.
     const response=await fetch(`/api/sessions/${sid}/export/zip`,{signal:AbortSignal.timeout(30000)});
-    if(!response.ok)throw new Error('Sesión guardada; no se pudo generar el paquete. Usa «Descargar paquete».');
-    await response.arrayBuffer();toast('Listo. El paquete para tu agente ya está guardado en el PC.');
+    if(!response.ok)throw new Error('Session saved, but the package could not be generated. Use “Download package”.');
+    await response.arrayBuffer();toast('Done. Your agent package is now saved on the PC.');
   }catch(e){toast(e.message);}finally{finishing=false;$('#finish').disabled=!editing;}
 }
 async function previewForAgent() {
   if(dirty)await save();
-  if(dirty||saving||currentStroke||remotePreview){toast('Espera a que termine el trazo y aparezca «Guardado en el PC».');return;}
+  if(dirty||saving||currentStroke||remotePreview){toast('Wait for the stroke to finish and for “Saved to PC” to appear.');return;}
   const button=$('#preview-agent');button.disabled=true;
   try{
     const response=await fetch(`/api/sessions/${sid}/export/png`,{signal:AbortSignal.timeout(30000)});
-    if(!response.ok)throw new Error('No se pudo generar la vista del agente.');
+    if(!response.ok)throw new Error('Could not generate the agent preview.');
     const image=$('#agent-image');if(image.dataset.blob)URL.revokeObjectURL(image.dataset.blob);
     image.dataset.blob=URL.createObjectURL(await response.blob());image.src=image.dataset.blob;
     $('#agent-preview').showModal();
@@ -357,25 +357,25 @@ async function initSession() {
   $('#workspace').hidden=false;
   try {
     session=await api(`/api/sessions/${sid}`);annotations=clone(session.annotations);notes=session.notes;remember(session);
-    $('#title').textContent=session.title;document.title=`${session.title} · Trazo`;$('#dimensions').textContent=`${session.width} × ${session.height} px · sesión compartida`;
+    $('#title').textContent=session.title;document.title=`${session.title} · Trazo`;$('#dimensions').textContent=`${session.width} × ${session.height} px · shared session`;
     $('#notes').value=notes;
     baseImage=new Image();baseImage.src=`/api/sessions/${sid}/image`;await baseImage.decode();$('#loading-canvas').hidden=true;
     for(const type of ['png','md','zip'])$('#download-'+type).href=`/api/sessions/${sid}/export/${type}`;
     recovered=readStorage(draftKey,null);
     if(recovered){
-      if(recovered.version===session.version){editing=true;annotations=recovered.annotations;notes=recovered.notes;$('#notes').value=notes;dirty=true;changeNumber++;notice('Se ha recuperado tu borrador local. Se guardará automáticamente en el PC.');saveTimer=setTimeout(save,1000);}
-      else {notice('Hay un borrador local y una versión más reciente en el PC. Puedes descargar el borrador antes de continuar.');$('#draft').hidden=false;$('#draft').onclick=()=>{const original=annotations,originalNotes=notes;annotations=recovered.annotations;notes=recovered.notes;downloadDraft();annotations=original;notes=originalNotes;};}
+      if(recovered.version===session.version){editing=true;annotations=recovered.annotations;notes=recovered.notes;$('#notes').value=notes;dirty=true;changeNumber++;notice('Your local draft has been recovered. It will be saved to the PC automatically.');saveTimer=setTimeout(save,1000);}
+      else {notice('There is a local draft and a newer version on the PC. You can download the draft before continuing.');$('#draft').hidden=false;$('#draft').onclick=()=>{const original=annotations,originalNotes=notes;annotations=recovered.annotations;notes=recovered.notes;downloadDraft();annotations=original;notes=originalNotes;};}
     }
-    configureEditing();resizeCanvas();if(tablet)fit();else fitAll();state(dirty?'Borrador recuperado':'✓ Guardado en el PC');connectLive();updateConnection();
+    configureEditing();resizeCanvas();if(tablet)fit();else fitAll();state(dirty?'Draft recovered':'✓ Saved to PC');connectLive();updateConnection();
     new ResizeObserver(resizeCanvas).observe(viewport);
     if(!tablet&&new URLSearchParams(location.search).get('share')==='1')share();
     setInterval(refresh,2000);setInterval(heartbeat,5000);
-  } catch(e) {state('No se pudo abrir',true);notice(e.message);$('#loading-canvas').textContent='No se pudo cargar la imagen.';return;}
+  } catch(e) {state('Could not open session',true);notice(e.message);$('#loading-canvas').textContent='Could not load the image.';return;}
   $('#share').onclick=share;$('#close-share').onclick=()=>$('#share-dialog').close();
   $('#panel-toggle').onclick=()=>{const open=document.body.classList.toggle('panel-open');$('#panel-toggle').setAttribute('aria-expanded',open);};
   $('#tools-toggle').onclick=()=>{const open=document.body.classList.toggle('tools-open');$('#tools-toggle').setAttribute('aria-expanded',open);};
-  $('#copy-link').onclick=async()=>{try{await clipboard(session.url);toast('Enlace copiado');}catch(e){toast(e.message);}};
-  $('#toggle-edit').onclick=async()=>{if(dirty||saving){await save();if(dirty||saving){toast('Espera a que se guarden los cambios.');return;}}editing=!editing;const url=new URL(location.href);url.searchParams.set('mode',editing?'edit':'view');url.searchParams.delete('share');window.history.replaceState(null,'',url);configureEditing();updateConnection();};
+  $('#copy-link').onclick=async()=>{try{await clipboard(session.url);toast('Link copied');}catch(e){toast(e.message);}};
+  $('#toggle-edit').onclick=async()=>{if(dirty||saving){await save();if(dirty||saving){toast('Wait for your changes to finish saving.');return;}}editing=!editing;const url=new URL(location.href);url.searchParams.set('mode',editing?'edit':'view');url.searchParams.delete('share');window.history.replaceState(null,'',url);configureEditing();updateConnection();};
   $('#notes').oninput=()=>{notes=$('#notes').value;changed();};
   $$('[data-tool]').forEach(b=>b.onclick=()=>selectTool(b.dataset.tool));
   $$('[data-color]').forEach(b=>b.onclick=()=>{color=b.dataset.color;$$('[data-color]').forEach(c=>c.classList.toggle('active',c===b));});
@@ -386,10 +386,10 @@ async function initSession() {
   $('#finish').onclick=finish;if(!$('#draft').onclick)$('#draft').onclick=downloadDraft;
   $('#copy-prompt').onclick=async()=>{
     const pins=annotations.filter(a=>a.kind==='pin');
-    const text=[`Quiero modificar la imagen «${session.title}». Revisa original, anotada.png e instrucciones.md del paquete adjunto. Lee también la escritura a mano y las flechas en los márgenes, fuera de la imagen original; forman parte de las instrucciones.`,notes,...pins.map((a,i)=>`Zona ${i+1}: ${a.text||'Ver marca en la imagen.'}`),'Aplica los cambios indicados y pregunta si alguna marca es ambigua.'].filter(Boolean).join('\n\n');
-    try{await clipboard(text);toast('Mensaje copiado. Adjunta el paquete o la imagen a tu agente.');}catch(e){toast(e.message);}
+    const text=[`I want to modify the image “${session.title}”. Review the original, annotated.png, and instructions.md in the attached package. Also read the handwriting and arrows in the margins outside the original image; they are part of the instructions.`,notes,...pins.map((a,i)=>`Area ${i+1}: ${a.text||'See the mark on the image.'}`),'Apply the requested changes and ask if any annotation is unclear.'].filter(Boolean).join('\n\n');
+    try{await clipboard(text);toast('Prompt copied. Attach the package or image for your agent.');}catch(e){toast(e.message);}
   };
-  for(const a of $$('.export-section a'))a.addEventListener('click',async e=>{if(dirty||saving){e.preventDefault();await save();if(dirty||saving)toast('El paquete todavía no incluye los cambios pendientes. Espera al guardado.');else location.href=a.href;}});
+  for(const a of $$('.export-section a'))a.addEventListener('click',async e=>{if(dirty||saving){e.preventDefault();await save();if(dirty||saving)toast('The package does not include unsaved changes yet. Wait for saving to finish.');else location.href=a.href;}});
   viewport.addEventListener('pointerdown',pointerDown);viewport.addEventListener('pointermove',pointerMove);viewport.addEventListener('pointerup',pointerUp);viewport.addEventListener('pointercancel',pointerUp);
   canvas.addEventListener('lostpointercapture',e=>{if(e.pointerId===activePointer)pointerUp(e);});
   viewport.addEventListener('contextmenu',e=>e.preventDefault());
@@ -398,6 +398,6 @@ async function initSession() {
   viewport.addEventListener('wheel',e=>{if(e.ctrlKey||e.metaKey){e.preventDefault();const r=viewport.getBoundingClientRect();setZoom(zoom*Math.exp(-e.deltaY*.01),[e.clientX-r.left,e.clientY-r.top]);}},{passive:false});
   window.addEventListener('beforeunload',e=>{if(dirty||saving){saveDraft();e.preventDefault();e.returnValue='';}});
   document.addEventListener('visibilitychange',()=>{if(document.hidden&&dirty){saveDraft();save();}else{refresh();heartbeat();}});
-  document.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA'].includes(e.target.tagName))return;if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();(e.shiftKey?$('#redo'):$('#undo')).click();}else if(editing){const key={l:'pen',f:'arrow',r:'rect',n:'pin',m:'pan'}[e.key.toLowerCase()];if(key)selectTool(key);}});
+  document.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA'].includes(e.target.tagName))return;if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();(e.shiftKey?$('#redo'):$('#undo')).click();}else if(editing){const key={p:'pen',a:'arrow',r:'rect',n:'pin',m:'pan'}[e.key.toLowerCase()];if(key)selectTool(key);}});
 }
 if(sid)initSession();else initHome();

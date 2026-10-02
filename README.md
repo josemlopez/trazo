@@ -1,42 +1,55 @@
-# Trazo · Anotador de imágenes
+# Trazo
 
-Web local para subir una imagen desde el PC, abrir su QR en Safari en el iPad y anotar con Apple Pencil. Ambos dispositivos trabajan sobre la misma sesión. No requiere una app nativa ni servicios externos para anotar.
+**Show your AI agents what you want to change.**
 
-## Iniciar
+Upload an image on your computer, scan a QR code with your iPad, and annotate it with Apple Pencil. Your computer sees the strokes as you draw. Export the complete annotated canvas and written instructions for your agent.
 
-Descarga o clona este repositorio y abre su carpeta. En Windows, haz doble clic en **Iniciar.cmd**, o ejecuta desde PowerShell:
+Trazo runs on your computer and works over your local network. No native iPad app, cloud account, or external AI service is required.
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\Iniciar.ps1
+![Trazo home page](docs/screenshots/home.jpg)
+
+## How it works
+
+1. **Upload on your computer.** Drop an image, select a file, or paste a screenshot.
+2. **Scan the QR code.** Open the shared session in Safari on your iPad. Both devices must be on the same local network.
+3. **Draw and explain.** Use the pen, arrows, rectangles, and numbered notes. You can write outside the original image, too.
+4. **Watch on your computer.** Strokes arrive while you draw. The QR dialog closes when the iPad connects.
+5. **Share with your agent.** Preview the complete image, download the package, and attach it to your agent conversation.
+
+### Desktop workspace
+
+See your image, numbered comments, and export controls together. The desktop opens in view mode; choose **Edit here** to annotate with a mouse.
+
+![Desktop editor with example annotations and instructions](docs/screenshots/desktop.jpg)
+
+### iPad workspace
+
+The pen is active immediately, with **Tools** and **Comments** collapsed. In **Pencil only** mode, use two fingers to pan and zoom. Placing a numbered note returns to the pen without opening the keyboard or scrolling to a text field.
+
+![Compact iPad layout with the complete annotation canvas](docs/screenshots/ipad.jpg)
+
+These are real browser screenshots using synthetic example content. The iPad layout is shown at a tablet viewport size; it is not a photograph of a physical device.
+
+## Quick start
+
+You need **Python 3.11 or newer**, a computer, and an iPad with Safari on the same network. Installing dependencies requires an internet connection; annotating does not.
+
+```sh
+git clone https://github.com/josemlopez/trazo.git
+cd trazo
 ```
 
-El lanzador abre http://localhost:8795 y mantiene el servidor en segundo plano. Los registros están en `server.log` y `server-error.log`. Necesita Python 3.10+; la primera instalación descarga las dependencias en `.venv`.
+### Windows
 
-## Uso
+Double-click **Start.cmd**, or run:
 
-1. En el PC, arrastra una imagen, selecciónala o pega una captura con Ctrl+V.
-2. Escanea el QR con la cámara del iPad y abre el enlace en Safari. PC e iPad deben estar en la misma red, con acceso entre dispositivos.
-3. En el iPad, el lápiz está activo directamente y los paneles empiezan plegados. **Herramientas** abre lápiz, flechas, rectángulos, notas, colores y deshacer. **Comentarios** abre las instrucciones. Toda la superficie central permite escribir, dentro y fuera de la imagen. En **Solo Pencil**, usa dos dedos para desplazar y ampliar; un dedo o la palma no mueve el lienzo. En el PC puedes activar **Editar aquí** y usar el ratón.
-4. Los trazos se transmiten al PC durante el movimiento mediante WebSocket. Los cambios se guardan automáticamente tras una pausa de 350 ms; la consulta cada dos segundos sirve de respaldo si se interrumpe el canal en directo. El QR se cierra al detectar un editor conectado con la vista de iPad. Las notas numeradas vuelven al lápiz tras colocarlas y no fuerzan el foco, el teclado ni el desplazamiento al panel.
-5. **Listo para el agente** guarda la sesión y genera el ZIP en el PC. **Descargar paquete** devuelve original, base orientada, imagen anotada, instrucciones Markdown y anotaciones JSON. **Copiar mensaje para el agente** facilita el texto que acompañará al paquete; no envía mensajes a ningún agente.
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Start.ps1
+```
 
-Mantén Safari abierto y el PC encendido mientras anotas. La vista del PC es de lectura inicialmente. Evita editar simultáneamente desde dos ventanas: el control de versiones rechaza una escritura obsoleta, conserva el borrador local y permite descargarlo.
+The launcher creates `.venv`, installs the pinned dependencies, starts the server in the background, and opens [localhost:8795](http://localhost:8795). Logs are written to `server.log` and `server-error.log`.
 
-## Datos
-
-Las sesiones se guardan en `data/sessions.sqlite3`; los archivos en `data/<id-de-sesión>/`. El archivo original se conserva byte a byte. El lienzo usa una copia PNG orientada y limitada a 4096 px por lado. Las coordenadas de las anotaciones son relativas a esa imagen y admiten valores negativos para escribir fuera de ella, hasta ±16384 px por eje. La exportación incluye todas las marcas; si es necesario, reduce el resultado a 8192 px por lado y 24 megapíxeles. GIF utiliza el primer fotograma. Tamaño máximo de subida: 25 MB; máximo de imagen: 45 millones de píxeles. Las exportaciones se conservan en la carpeta de la sesión cuando se generan; el estado editable actual se guarda en SQLite. Las sesiones existentes conservan sus coordenadas y anotaciones.
-
-Los enlaces contienen un identificador aleatorio de 128 bits. Cualquier persona con el enlace y acceso a la red puede ver y editar esa sesión. No publiques este servidor directamente en Internet; el despliegue externo, autenticación y HTTPS quedan para la siguiente etapa. La portada recuerda en ese navegador sus últimas 30 sesiones, sin publicar un listado de todas las sesiones.
-
-## Conexión del iPad
-
-La dirección LAN se calcula al iniciar el servidor y aparece en el QR. Si cambia la IP del PC, reinicia el servidor. Para una interfaz concreta, puedes definir `ANNOTATOR_BASE_URL` con la dirección de ese equipo y el puerto, siguiendo el formato `http://<IP-DEL-PC>:8795`.
-
-Si Safari no conecta, revisa que no sea una red Wi-Fi de invitados con aislamiento y que Windows permita TCP 8795 desde la red local. El funcionamiento real de Apple Pencil, los gestos y el rechazo de palma debe comprobarse en el iPad físico.
-
-## Desarrollo
-
-Instalación manual desde la carpeta del proyecto:
+Manual setup:
 
 ```powershell
 python -m venv .venv
@@ -44,14 +57,86 @@ python -m venv .venv
 .\.venv\Scripts\python.exe server.py
 ```
 
-Backend FastAPI, SQLite y Pillow; interfaz HTML/CSS/JavaScript sin compilación ni recursos de terceros. La copia al portapapeles incluye una alternativa para HTTP local. El servidor escucha en todas las interfaces en el puerto 8795. Para detenerlo, identifica primero el proceso con `Get-NetTCPConnection -LocalPort 8795 -State Listen` y detén solo ese proceso.
+The original `Iniciar.cmd` and `Iniciar.ps1` entry points remain as compatibility wrappers.
 
-`requirements-lock.txt` contiene las versiones instaladas y comprobadas. `tools/verify.py` comprueba subida, guardado, conflicto de versiones, conservación del original, QR, exportación fuera de la imagen, validación de coordenadas, presencia de iPad y transmisión de trazos antes del guardado; genera una imagen de ejemplo y una sesión de comprobación. La interfaz se comprobó con dos vistas de navegador, verificando el cierre del QR, la llegada de notas al PC antes del guardado y que una nota no enfoca campos ni desplaza la página. Se revisaron tamaños 1024×768 y 768×1024 sin desbordamiento de página. La prueba del Pencil y los gestos en el iPad físico debe confirmarse allí.
+### macOS and Linux
 
-Después de actualizar la aplicación, recarga Safari en el iPad y la página del PC cuando aparezca **Guardado en el PC**, para cargar el nuevo editor. Los enlaces antiguos siguen funcionando; los QR nuevos añaden `surface=tablet` para abrir directamente la interfaz compacta.
+The Python server can also be started manually:
 
-El botón **Ver todo** encuadra imagen y anotaciones exteriores. En el PC ese es el encuadre inicial. **Vista del agente** muestra el PNG completo que se incluye en el paquete, con todas las marcas guardadas; el mensaje copiado recuerda al agente leer también las notas de los márgenes.
+```sh
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements-lock.txt
+.venv/bin/python server.py
+```
 
-## Contenido del repositorio
+Open [localhost:8795](http://localhost:8795) on the host computer. The supplied background launcher is Windows-specific; keep the terminal open for manual startup and press Ctrl+C to stop it. The current release was tested on Windows; macOS and Linux setup has not been verified on physical machines.
 
-Se distribuyen únicamente el código, los lanzadores, las dependencias y la documentación. No se incluyen imágenes de usuarios, sesiones, anotaciones, bases de datos ni registros. `.gitignore` permite solo los archivos de código revisados; para añadir un archivo nuevo al repositorio hay que incorporarlo explícitamente a esa lista. Los datos creados al usar la aplicación permanecen en la carpeta local `data/`.
+## Features
+
+- Live stroke sharing over WebSocket, with periodic refresh as a fallback.
+- Autosave after a short pause, plus a browser draft for interrupted connections.
+- Pen, arrows, rectangles, numbered comments, colors, stroke width, undo, and redo.
+- A writing surface that extends beyond the image. **Fit all** includes exterior annotations; **Center image** returns to the source image.
+- **Agent preview** shows the complete exported image, including notes in the margins.
+- Version checks to prevent one editor from silently overwriting another.
+- Local storage, with the uploaded original preserved byte for byte.
+
+Keep the server running and Safari open while drawing. Prefer one active editor at a time. If a version conflict occurs, download your local draft before loading the newer PC version.
+
+Keyboard shortcuts: **P** pen, **A** arrow, **R** rectangle, **N** numbered note, **M** pan, **Ctrl/Cmd+Z** undo, and **Ctrl/Cmd+Shift+Z** redo.
+
+## What your agent receives
+
+**Ready for agent** saves the session and generates a ZIP on the computer. **Download package** downloads a fresh snapshot containing:
+
+| File | Contents |
+| --- | --- |
+| `original.*` | Your uploaded file, unchanged |
+| `base.png` | The oriented image used as the coordinate reference |
+| `annotated.png` | The image with every saved mark, including writing outside its edges |
+| `instructions.md` | General instructions, numbered comments, and coordinate information |
+| `annotations.json` | Editable strokes, areas, comments, and session metadata |
+
+**Copy agent prompt** copies a message that tells the agent to read the image and its margins. Trazo does not send messages to agents automatically. Your own notes remain in the language you wrote them.
+
+## Local data and privacy
+
+Session state lives in `data/sessions.sqlite3`; uploaded files and generated exports live in `data/<session-id>/`. Browser drafts and recent-session links are stored in that browser.
+
+This repository contains only source code, launchers, documentation, dependencies, and synthetic screenshots. User images, sessions, annotations, databases, logs, exports, and local environments are excluded. `.gitignore` uses an explicit file allowlist, so new files must be reviewed and added deliberately.
+
+Session links contain a random 128-bit identifier. Anyone with a link and access to the server can view and edit that session. This version is intended for a trusted local network and has no account login or HTTPS setup; do not expose it directly to the internet.
+
+## Connecting your iPad
+
+The server detects its local network address at startup and puts it in the QR code. If the host IP changes, restart the server. For a specific interface, set `ANNOTATOR_BASE_URL` to `http://<HOST-IP>:8795` before starting it.
+
+If Safari cannot connect, check:
+
+- Both devices can communicate on the same network; guest Wi-Fi may isolate devices.
+- The host firewall allows incoming TCP connections on port **8795** from the local network.
+- The server is running. Opening `localhost` on the iPad refers to the iPad itself; use the QR link instead.
+
+The manual server also accepts `ANNOTATOR_PORT`. The Windows launcher uses port 8795. Pencil gestures and palm behavior should be checked on your own iPad.
+
+## Image limits
+
+Uploads support PNG, JPEG, WebP, GIF, and BMP, up to **25 MB** and **45 million pixels**. GIF uses its first frame. The working image is oriented and resized to at most **4096 px per side**.
+
+Annotation coordinates are relative to the working image and can extend to **±16384 px per axis**. Exports include every annotation, scaling down when necessary to stay within **8192 px per side** and **24 megapixels**. The original is never resized or overwritten.
+
+## Development and verification
+
+Backend: FastAPI, Uvicorn, SQLite, Pillow, and qrcode. Frontend: HTML, CSS, and JavaScript, with no build step or third-party runtime assets.
+
+With the server running on port 8795:
+
+```powershell
+.\.venv\Scripts\python.exe tools\verify.py
+```
+
+On macOS or Linux, use `.venv/bin/python tools/verify.py`.
+
+The script generates synthetic content and checks upload, autosave, revision conflicts, original-file preservation, QR generation, complete exports, coordinate validation, live strokes before saving, and tablet presence. It creates a test session and an example image locally.
+
+After updating Trazo, wait for **Saved to PC**, then reload both browsers. Existing sessions and annotation coordinates remain compatible. New exports use English filenames; previously generated files remain on disk.

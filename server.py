@@ -1,4 +1,4 @@
-"""Anotador local: sesiones compartidas PC/iPad, sin servicios externos."""
+"""Local image annotator: shared PC/iPad sessions with no external services."""
 from __future__ import annotations
 
 import asyncio
@@ -83,7 +83,7 @@ async def same_origin(request: Request, call_next):
     origin = request.headers.get('origin')
     if request.method not in ('GET', 'HEAD', 'OPTIONS') and origin:
         if origin.rstrip('/') != f'{request.url.scheme}://{request.headers.get("host", "")}':
-            return Response('Origen no permitido', status_code=403)
+            return Response('Origin not allowed', status_code=403)
     response = await call_next(request)
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['Referrer-Policy'] = 'no-referrer'
@@ -93,11 +93,11 @@ async def same_origin(request: Request, call_next):
 
 def get_session(sid):
     if len(sid) != 32 or any(c not in '0123456789abcdef' for c in sid):
-        raise HTTPException(404, 'Sesión no encontrada')
+        raise HTTPException(404, 'Session not found')
     with connection() as conn:
         row = conn.execute('SELECT * FROM sessions WHERE id=?', (sid,)).fetchone()
     if row is None:
-        raise HTTPException(404, 'Sesión no encontrada')
+        raise HTTPException(404, 'Session not found')
     result = dict(row)
     result['annotations'] = json.loads(result['annotations'])
     result['url'] = f'{BASE_URL}/s/{sid}?mode=edit&surface=tablet'
@@ -114,25 +114,25 @@ def info():
 async def create_session(file: UploadFile):
     raw = await file.read(MAX_UPLOAD + 1)
     if len(raw) > MAX_UPLOAD:
-        raise HTTPException(413, 'La imagen supera el límite de 25 MB.')
+        raise HTTPException(413, 'The image exceeds the 25 MB limit.')
     try:
         with warnings.catch_warnings():
             warnings.simplefilter('error', Image.DecompressionBombWarning)
             original = Image.open(io.BytesIO(raw))
             fmt = original.format
             if fmt not in ('PNG', 'JPEG', 'WEBP', 'GIF', 'BMP'):
-                raise HTTPException(415, 'Utiliza PNG, JPEG, WebP, GIF o BMP.')
+                raise HTTPException(415, 'Use PNG, JPEG, WebP, GIF, or BMP.')
             img = ImageOps.exif_transpose(original).convert('RGBA')
             img.thumbnail((4096, 4096), Image.Resampling.LANCZOS)
     except (UnidentifiedImageError, OSError, Image.DecompressionBombError, Image.DecompressionBombWarning):
-        raise HTTPException(415, 'No se puede leer la imagen o es demasiado grande.')
+        raise HTTPException(415, 'The image cannot be read or is too large.')
     sid = secrets.token_hex(16)
     folder = DATA / sid
     folder.mkdir()
     ext = {'PNG': 'png', 'JPEG': 'jpg', 'WEBP': 'webp', 'GIF': 'gif', 'BMP': 'bmp'}[fmt]
     (folder / f'original.{ext}').write_bytes(raw)
     img.save(folder / 'base.png')
-    title = (file.filename or 'Imagen').replace('\\', '/').split('/')[-1][:160]
+    title = (file.filename or 'Image').replace('\\', '/').split('/')[-1][:160]
     now = time.time()
     with connection() as conn:
         conn.execute('INSERT INTO sessions (id,title,width,height,original_ext,created,updated) VALUES (?,?,?,?,?,?,?)',
@@ -187,7 +187,7 @@ def validate_coordinates(annotations):
     for annotation in annotations:
         for x, y in annotation.points:
             if not math.isfinite(x) or not math.isfinite(y) or not (-WORLD_LIMIT <= x <= WORLD_LIMIT and -WORLD_LIMIT <= y <= WORLD_LIMIT):
-                raise ValueError('Coordenadas fuera del espacio de trabajo.')
+                raise ValueError('Coordinates are outside the workspace.')
 
 
 @app.websocket('/api/sessions/{sid}/live')
@@ -260,11 +260,11 @@ async def update_session(sid: str, request: Request):
     async for chunk in request.stream():
         raw.extend(chunk)
         if len(raw) > 12 * 1024 * 1024:
-            raise HTTPException(413, 'Demasiadas anotaciones en esta sesión.')
+            raise HTTPException(413, 'Too many annotations in this session.')
     try:
         update = Update.model_validate_json(raw)
     except ValueError:
-        raise HTTPException(422, 'Formato de anotaciones no válido.')
+        raise HTTPException(422, 'Invalid annotation format.')
     with LOCK:
         session = get_session(sid)
         try:
@@ -272,7 +272,7 @@ async def update_session(sid: str, request: Request):
         except ValueError as error:
             raise HTTPException(422, str(error))
         if update.version != session['version']:
-            raise HTTPException(409, 'Esta sesión ha cambiado en otra ventana. Tus cambios locales siguen en este navegador. Descarga el borrador antes de recargar.')
+            raise HTTPException(409, 'This session was changed in another window. Your local changes are still in this browser. Download your draft before reloading.')
         with connection() as conn:
             conn.execute('UPDATE sessions SET annotations=?,notes=?,status=?,version=version+1,updated=? WHERE id=?',
                          (json.dumps([a.model_dump() for a in update.annotations], ensure_ascii=False),
@@ -340,24 +340,24 @@ def annotated_png(session):
 
 
 def instructions(session):
-    lines = ['# Cambios solicitados', '', f"Imagen: {session['title']}",
-             f"Estado: {'Listo para el agente' if session['status'] == 'ready' else 'Borrador'}",
-             f"Imagen de referencia: {session['width']} × {session['height']} px",
-             f"Límites exportados [izquierda, arriba, derecha, abajo]: {export_bounds(session)}",
-             'Coordenadas relativas a la esquina superior izquierda de base.png. Los valores negativos están fuera de la imagen.', '',
-             '## Instrucciones generales', '', session['notes'] or '(Sin instrucciones generales)', '', '## Zonas numeradas', '']
+    lines = ['# Requested changes', '', f"Image: {session['title']}",
+             f"Status: {'Ready for agent' if session['status'] == 'ready' else 'Draft'}",
+             f"Reference image: {session['width']} × {session['height']} px",
+             f"Export bounds [left, top, right, bottom]: {export_bounds(session)}",
+             'Coordinates are relative to the top-left corner of base.png. Negative values are outside the image.', '',
+             '## General instructions', '', session['notes'] or '(No general instructions)', '', '## Numbered areas', '']
     pins = [a for a in session['annotations'] if a['kind'] == 'pin']
     for i, a in enumerate(pins, 1):
         x, y = a['points'][0]
-        lines += [f"### Zona {i} · x={round(x)}, y={round(y)}", '', a['text'] or '(Sin comentario)', '']
+        lines += [f"### Area {i} · x={round(x)}, y={round(y)}", '', a['text'] or '(No comment)', '']
     if not pins:
-        lines += ['(Sin zonas numeradas)', '']
-    lines += ['## Archivos de referencia', '',
-              '- original: archivo subido sin modificar.',
-              '- base.png: imagen orientada y ajustada a un máximo de 4096 px por lado; referencia de las coordenadas.',
-              '- anotada.png: imagen y todas las marcas, incluidas las escritas fuera de la imagen. Las exportaciones muy grandes se reducen a 8192 px por lado y 24 megapíxeles.',
-              '- anotaciones.json: trazos, zonas y comentarios editables.', '',
-              'Revisa las marcas y los comentarios conjuntamente antes de aplicar cambios.', '']
+        lines += ['(No numbered areas)', '']
+    lines += ['## Reference files', '',
+              '- original: the uploaded file, unchanged.',
+              '- base.png: the oriented image, resized to a maximum of 4096 px per side; the coordinate reference.',
+              '- annotated.png: the image and all annotations, including those outside the image. Large exports are limited to 8192 px per side and 24 megapixels.',
+              '- annotations.json: editable strokes, areas, and comments.', '',
+              'Review both visual annotations and comments before applying changes.', '']
     return '\n'.join(lines)
 
 
@@ -366,19 +366,19 @@ def export(sid: str, kind: str):
     session = get_session(sid)
     folder = DATA / sid
     if kind == 'png':
-        payload, mime, filename = annotated_png(session), 'image/png', 'anotada.png'
+        payload, mime, filename = annotated_png(session), 'image/png', 'annotated.png'
     elif kind == 'md':
-        payload, mime, filename = instructions(session).encode('utf-8'), 'text/markdown; charset=utf-8', 'instrucciones.md'
+        payload, mime, filename = instructions(session).encode('utf-8'), 'text/markdown; charset=utf-8', 'instructions.md'
     elif kind == 'zip':
         buffer = io.BytesIO()
         with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as archive:
             original_name = f"original.{session['original_ext']}"
             archive.write(folder / original_name, original_name)
             archive.write(folder / 'base.png', 'base.png')
-            archive.writestr('anotada.png', annotated_png(session))
-            archive.writestr('instrucciones.md', instructions(session))
-            archive.writestr('anotaciones.json', json.dumps({k: session[k] for k in ('id','title','width','height','version','status','annotations','notes')}, ensure_ascii=False, indent=2))
-        payload, mime, filename = buffer.getvalue(), 'application/zip', f'anotaciones-{sid[:8]}.zip'
+            archive.writestr('annotated.png', annotated_png(session))
+            archive.writestr('instructions.md', instructions(session))
+            archive.writestr('annotations.json', json.dumps({k: session[k] for k in ('id','title','width','height','version','status','annotations','notes')}, ensure_ascii=False, indent=2))
+        payload, mime, filename = buffer.getvalue(), 'application/zip', f'annotations-{sid[:8]}.zip'
     else:
         raise HTTPException(404)
     # Keep a concrete export on the PC as well as returning the browser download.

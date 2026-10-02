@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#f5f3ee">
-  <title>Trazo · Anotador de imágenes</title>
+  <title>Trazo · Image annotator</title>
   <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/static/style.css">
   <script src="/static/app.js" defer></script>
@@ -13,67 +13,67 @@
 <body>
 <header class="topbar">
   <a href="/" class="brand"><span class="brand-icon">↗</span> trazo<span class="brand-dot">.</span></a>
-  <span class="brand-description">Una imagen. Una conversación más clara.</span>
-  <span class="local-badge"><span></span> EN TU RED LOCAL</span>
+  <span class="brand-description">One image. A clearer conversation.</span>
+  <span class="local-badge"><span></span> ON YOUR LOCAL NETWORK</span>
 </header>
 
 <main id="home" class="home" hidden>
-  <div class="eyebrow">DEL PC A TU PENCIL</div>
-  <h1>Muéstrales lo que<br>tienes <em>en mente.</em></h1>
-  <p class="intro">Sube una imagen, abre el QR en tu iPad y señala los cambios.<br>Tus ideas y tus agentes, en la misma página.</p>
+  <div class="eyebrow">FROM YOUR PC TO YOUR PENCIL</div>
+  <h1>Show them what<br>you have <em>in mind.</em></h1>
+  <p class="intro">Upload an image, scan the QR code on your iPad, and mark your changes.<br>Your ideas and your agents, on the same page.</p>
   <section class="upload-card" id="dropzone">
     <div class="upload-symbol">↥</div>
-    <h2>Todo empieza con una imagen</h2>
-    <p>Arrástrala aquí o pega una captura con Ctrl + V</p>
-    <label class="button primary upload-button" for="file">Seleccionar imagen <span>＋</span></label>
+    <h2>It starts with an image</h2>
+    <p>Drop it here or paste a screenshot with Ctrl + V</p>
+    <label class="button primary upload-button" for="file">Choose an image <span>＋</span></label>
     <input type="file" id="file" accept="image/png,image/jpeg,image/webp,image/gif,image/bmp" hidden>
-    <small>PNG, JPG, WebP, GIF o BMP · hasta 25 MB</small>
+    <small>PNG, JPG, WebP, GIF or BMP · up to 25 MB</small>
     <p id="upload-status" role="status"></p>
   </section>
-  <div class="steps"><div><b>01</b><span>Sube en el PC</span></div><span class="step-line"></span><div><b>02</b><span>Anota en el iPad</span></div><span class="step-line"></span><div><b>03</b><span>Comparte con tu agente</span></div></div>
-  <section class="recent-section"><div class="section-heading"><h2>Tu mesa de trabajo</h2><span>Sesiones de este navegador</span></div><div id="recent" class="recent-grid"></div></section>
-  <footer>Las imágenes se guardan en este PC. Mantén el servidor encendido mientras anotas.</footer>
+  <div class="steps"><div><b>01</b><span>Upload on your PC</span></div><span class="step-line"></span><div><b>02</b><span>Annotate on your iPad</span></div><span class="step-line"></span><div><b>03</b><span>Share with your agent</span></div></div>
+  <section class="recent-section"><div class="section-heading"><h2>Your workspace</h2><span>Sessions in this browser</span></div><div id="recent" class="recent-grid"></div></section>
+  <footer>Images are stored on this PC. Keep the server running while you annotate.</footer>
 </main>
 
 <main id="workspace" hidden>
   <div class="session-bar">
-    <div class="session-title"><a href="/" title="Volver al inicio">←</a><div><h1 id="title"></h1><span id="dimensions"></span></div></div>
-    <div class="session-actions"><span id="save-state" class="state" role="status">Cargando…</span><button id="tools-toggle" class="button tablet-button" aria-expanded="false" aria-controls="drawing-tools">✎ Herramientas</button><button id="panel-toggle" class="button tablet-button" aria-expanded="false" aria-controls="comments-panel">Comentarios</button><button id="share" class="button">Abrir en iPad <span>▦</span></button><button id="finish" class="button primary">Listo para el agente <span>✓</span></button></div>
+    <div class="session-title"><a href="/" title="Back to home">←</a><div><h1 id="title"></h1><span id="dimensions"></span></div></div>
+    <div class="session-actions"><span id="save-state" class="state" role="status">Loading…</span><button id="tools-toggle" class="button tablet-button" aria-expanded="false" aria-controls="drawing-tools">✎ Tools</button><button id="panel-toggle" class="button tablet-button" aria-expanded="false" aria-controls="comments-panel">Comments</button><button id="share" class="button">Open on iPad <span>▦</span></button><button id="finish" class="button primary">Ready for agent <span>✓</span></button></div>
   </div>
   <div id="notice" class="notice" role="alert" hidden></div>
   <div class="workspace-grid">
     <section class="editor">
       <div class="toolbar" id="drawing-tools">
         <div class="tool-group" id="tools">
-          <button data-tool="pen" class="tool active" title="Lápiz (L)" aria-label="Lápiz">✎<span>Lápiz</span></button>
-          <button data-tool="arrow" class="tool" title="Flecha (F)" aria-label="Flecha">↗<span>Flecha</span></button>
-          <button data-tool="rect" class="tool" title="Rectángulo (R)" aria-label="Rectángulo">□<span>Zona</span></button>
-          <button data-tool="pin" class="tool" title="Punto numerado (N)" aria-label="Punto numerado">①<span>Nota</span></button>
-          <button data-tool="pan" class="tool" title="Mover lienzo (M)" aria-label="Mover lienzo">✥<span>Mover</span></button>
+          <button data-tool="pen" class="tool active" title="Pen (P)" aria-label="Pen">✎<span>Pen</span></button>
+          <button data-tool="arrow" class="tool" title="Arrow (A)" aria-label="Arrow">↗<span>Arrow</span></button>
+          <button data-tool="rect" class="tool" title="Rectangle (R)" aria-label="Rectangle">□<span>Area</span></button>
+          <button data-tool="pin" class="tool" title="Numbered note (N)" aria-label="Numbered note">①<span>Note</span></button>
+          <button data-tool="pan" class="tool" title="Pan canvas (M)" aria-label="Pan canvas">✥<span>Pan</span></button>
         </div>
         <div class="tool-group colors" id="colors">
-          <button data-color="#ea5b38" style="--swatch:#ea5b38" class="swatch active" aria-label="Naranja"></button>
-          <button data-color="#367bf5" style="--swatch:#367bf5" class="swatch" aria-label="Azul"></button>
-          <button data-color="#25986a" style="--swatch:#25986a" class="swatch" aria-label="Verde"></button>
-          <button data-color="#a254cf" style="--swatch:#a254cf" class="swatch" aria-label="Violeta"></button>
+          <button data-color="#ea5b38" style="--swatch:#ea5b38" class="swatch active" aria-label="Orange"></button>
+          <button data-color="#367bf5" style="--swatch:#367bf5" class="swatch" aria-label="Blue"></button>
+          <button data-color="#25986a" style="--swatch:#25986a" class="swatch" aria-label="Green"></button>
+          <button data-color="#a254cf" style="--swatch:#a254cf" class="swatch" aria-label="Purple"></button>
         </div>
-        <label class="width-label" title="Grosor del trazo">Trazo <input id="width" type="range" min="1" max="12" value="4" aria-label="Grosor"></label>
-        <div class="tool-group"><button id="undo" class="tool" title="Deshacer (Ctrl + Z)" aria-label="Deshacer">↶</button><button id="redo" class="tool" title="Rehacer (Ctrl + Shift + Z)" aria-label="Rehacer">↷</button></div>
+        <label class="width-label" title="Stroke width">Width <input id="width" type="range" min="1" max="12" value="4" aria-label="Width"></label>
+        <div class="tool-group"><button id="undo" class="tool" title="Undo (Ctrl + Z)" aria-label="Undo">↶</button><button id="redo" class="tool" title="Redo (Ctrl + Shift + Z)" aria-label="Redo">↷</button></div>
       </div>
-      <div class="canvas-viewport" id="viewport"><div id="canvas-wrap"><canvas id="canvas" aria-label="Imagen para anotar"></canvas></div><div id="loading-canvas">Preparando la imagen…</div></div>
-      <div class="canvas-footer"><label class="pencil-toggle"><input type="checkbox" id="pencil-only" checked> Solo Pencil <span>· dos dedos para mover</span></label><div class="zoom-controls"><button id="zoom-out" aria-label="Reducir zoom">−</button><button id="fit">Centrar imagen</button><button id="fit-all">Ver todo</button><span id="zoom-label">100%</span><button id="zoom-in" aria-label="Ampliar zoom">＋</button></div></div>
+      <div class="canvas-viewport" id="viewport"><div id="canvas-wrap"><canvas id="canvas" aria-label="Annotation canvas"></canvas></div><div id="loading-canvas">Preparing your image…</div></div>
+      <div class="canvas-footer"><label class="pencil-toggle"><input type="checkbox" id="pencil-only" checked> Pencil only <span>· two fingers to pan</span></label><div class="zoom-controls"><button id="zoom-out" aria-label="Zoom out">−</button><button id="fit">Center image</button><button id="fit-all">Fit all</button><span id="zoom-label">100%</span><button id="zoom-in" aria-label="Zoom in">＋</button></div></div>
     </section>
     <aside class="sidebar" id="comments-panel">
-      <div class="mode-row"><span id="mode-label">VISTA DEL PC</span><button id="toggle-edit" class="text-button">Editar aquí</button></div>
-      <div class="connection"><span id="connection-dot" class="dot"></span><div><strong id="connection-title">Esperando al iPad</strong><p id="connection-detail">Abre el QR para empezar a anotar.</p></div></div>
-      <section><div class="section-heading"><h2>Instrucciones</h2><span class="mini-label">PARA TU AGENTE</span></div><textarea id="notes" placeholder="¿Qué quieres cambiar? Describe aquí el objetivo general…" rows="4" maxlength="40000"></textarea></section>
-      <section class="pins-section"><div class="section-heading"><h2>Zonas señaladas</h2><span id="pin-count" class="count">0</span></div><div id="pins"></div><div id="empty-pins" class="empty-pins"><span>①</span><p>Cada detalle tiene su lugar.</p><small>Usa «Nota» sobre la imagen y escribe el cambio que quieres en esa zona.</small></div></section>
-      <section class="export-section"><h2>Preparado para compartir</h2><p>Incluye todo lo escrito dentro y fuera de la imagen.</p><button id="preview-agent" class="button">Vista del agente <span>↗</span></button><a id="download-zip" class="button dark" href="#">Descargar paquete <span>↓</span></a><div class="export-links"><a id="download-png" href="#">Solo imagen</a><a id="download-md" href="#">Instrucciones .md</a></div><button id="copy-prompt" class="text-button">Copiar mensaje para el agente</button><button id="draft" class="text-button" hidden>Descargar borrador local</button></section>
+      <div class="mode-row"><span id="mode-label">PC VIEW</span><button id="toggle-edit" class="text-button">Edit here</button></div>
+      <div class="connection"><span id="connection-dot" class="dot"></span><div><strong id="connection-title">Waiting for iPad</strong><p id="connection-detail">Scan the QR code to start annotating.</p></div></div>
+      <section><div class="section-heading"><h2>Instructions</h2><span class="mini-label">FOR YOUR AGENT</span></div><textarea id="notes" placeholder="What would you like to change? Describe the overall goal…" rows="4" maxlength="40000"></textarea></section>
+      <section class="pins-section"><div class="section-heading"><h2>Marked areas</h2><span id="pin-count" class="count">0</span></div><div id="pins"></div><div id="empty-pins" class="empty-pins"><span>①</span><p>Every detail has its place.</p><small>Place a Note on the canvas, then describe the change you want there.</small></div></section>
+      <section class="export-section"><h2>Ready to share</h2><p>Includes everything written on and around the image.</p><button id="preview-agent" class="button">Agent preview <span>↗</span></button><a id="download-zip" class="button dark" href="#">Download package <span>↓</span></a><div class="export-links"><a id="download-png" href="#">Image only</a><a id="download-md" href="#">Instructions .md</a></div><button id="copy-prompt" class="text-button">Copy agent prompt</button><button id="draft" class="text-button" hidden>Download local draft</button></section>
     </aside>
   </div>
 </main>
 
-<dialog id="share-dialog"><button class="dialog-close" id="close-share" aria-label="Cerrar">×</button><div class="eyebrow">CONTINÚA EN EL IPAD</div><h2>Tu lienzo, al otro<br>lado del QR.</h2><p>Escanea con la cámara del iPad.<br>Ambos dispositivos deben estar en la misma red.</p><img id="qr" width="228" height="228" alt="Código QR para abrir esta sesión en el iPad"><label for="session-url">O abre este enlace en Safari</label><input id="session-url" readonly><button id="copy-link" class="button primary">Copiar enlace</button><small>El enlace permite ver y editar esta sesión.<br>Mantén la página abierta en el iPad mientras dibujas.</small></dialog>
-<dialog id="agent-preview"><button class="dialog-close" id="close-agent-preview" aria-label="Cerrar vista del agente">×</button><h2>Esto recibirá tu agente</h2><p>Imagen completa con todas las marcas guardadas, incluidas las escritas en los márgenes.</p><img id="agent-image" alt="Imagen completa para el agente, incluidas las notas fuera del original"><p>Las anotaciones posteriores se incluirán al volver a abrir esta vista o descargar el paquete.</p></dialog>
+<dialog id="share-dialog"><button class="dialog-close" id="close-share" aria-label="Close">×</button><div class="eyebrow">CONTINUE ON YOUR IPAD</div><h2>Your canvas.<br>Just a scan away.</h2><p>Scan with your iPad camera.<br>Both devices must be on the same network.</p><img id="qr" width="228" height="228" alt="QR code to open this session on iPad"><label for="session-url">Or open this link in Safari</label><input id="session-url" readonly><button id="copy-link" class="button primary">Copy link</button><small>Anyone with this link can view and edit this session.<br>Keep the page open on your iPad while you draw.</small></dialog>
+<dialog id="agent-preview"><button class="dialog-close" id="close-agent-preview" aria-label="Close agent preview">×</button><h2>This is what your agent will receive</h2><p>The complete image with all saved annotations, including notes in the margins.</p><img id="agent-image" alt="Complete agent image, including notes outside the original"><p>Later annotations will be included when you reopen this preview or download the package.</p></dialog>
 <div id="toast" role="status" hidden></div>
 </body></html>

@@ -6,6 +6,8 @@
 !/server.py
 !/Iniciar.cmd
 !/Iniciar.ps1
+!/Start.cmd
+!/Start.ps1
 !/requirements.txt
 !/requirements-lock.txt
 !/static/
@@ -15,3 +17,8 @@
 !/static/icon.svg
 !/tools/
 !/tools/verify.py
+!/docs/
+!/docs/screenshots/
+!/docs/screenshots/home.jpg
+!/docs/screenshots/desktop.jpg
+!/docs/screenshots/ipad.jpg
