@@ -1,0 +1,17 @@
+# Only reviewed source files are allowed in Git. Runtime data and local files
+# stay ignored, including new files in otherwise allowed directories.
+*
+!/.gitignore
+!/README.md
+!/server.py
+!/Iniciar.cmd
+!/Iniciar.ps1
+!/requirements.txt
+!/requirements-lock.txt
+!/static/
+!/static/app.js
+!/static/index.html
+!/static/style.css
+!/static/icon.svg
+!/tools/
+!/tools/verify.py
